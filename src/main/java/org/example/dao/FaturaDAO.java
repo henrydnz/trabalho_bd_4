@@ -2,7 +2,7 @@ package org.example.dao;
 
 import org.example.model.Fatura;
 import org.example.model.Fornecedor;
-import org.example.singleton.DBConnection;
+import org.example.utils.DBConnection;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -16,12 +16,13 @@ public class FaturaDAO {
 
     public List<Fatura> listarPorFornecedor(Fornecedor fornecedor) throws SQLException {
         String sql = """
-        SELECT f."numero", f."dataLancamento", f."dataVencimento", f."valorFatura"
-        FROM "Fatura" f
-        JOIN "MotivoFatura" m ON f."idMotivo" = m."idMotivo"
-        WHERE f."idFornecedor" = ?
-        ORDER BY f."dataVencimento"
-        """;
+            SELECT f."nroFatura", f."dataLancamento", f."dataVencimento", f."valorFatura",
+                   m."nomeMotivo"
+            FROM "Fatura" f
+            JOIN "MotivoFatura" m ON f."idMotivo" = m."idMotivo"
+            WHERE f."idFornecedor" = ?
+            ORDER BY f."dataVencimento"
+            """;
 
         List<Fatura> faturas = new ArrayList<>();
 
@@ -32,38 +33,30 @@ public class FaturaDAO {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    Fatura fatura = new Fatura();
-                    fatura.setNumero(rs.getInt("nroFatura"));
-                    fatura.setDataLancamento(rs.getDate("dataLancamento").toString());
-                    fatura.setDataVencimento(rs.getDate("dataVencimento").toString());
-                    fatura.setValor(rs.getDouble("valorFatura"));
-                    fatura.setIdMotivo(rs.getInt("idMotivo"));
-
-                    // Todas as faturas apontam para a mesma instância na memória
-                    fatura.setFornecedor(fornecedor);
-
-                    faturas.add(fatura);
+                    faturas.add(montarFatura(rs, fornecedor));
                 }
             }
         }
         return faturas;
     }
 
-    public void inserir(Fatura fatura, int idMotivoFatura) throws SQLException {
+    public void inserir(Fatura fatura) throws SQLException {
         String sql = """
-            INSERT INTO "Fatura" ("nroFatura", "idFornecedor", "idMotivo", "dataLancamento", "dataVencimento", "valor")
+            INSERT INTO "Fatura" ("nroFatura", "idFornecedor", "idMotivo", "dataLancamento", "dataVencimento", "valorFatura")
             VALUES (?, ?, ?, ?, ?, ?)
             """;
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setInt(1, fatura.getNumero());
-                stmt.setInt(2, fatura.getFornecedor().getId());
-                stmt.setInt(3, idMotivoFatura);
-                stmt.setDate(4, Date.valueOf(fatura.getDataLancamento())); // Formato esperado: "YYYY-MM-DD"
-                stmt.setDate(5, Date.valueOf(fatura.getDataVencimento())); // Formato esperado: "YYYY-MM-DD"
-                stmt.setDouble(6, fatura.getValor());
 
+            int idMotivo = buscarIdMotivoPorNome(conn, fatura.getMotivoFatura());
+
+            stmt.setInt(1, fatura.getNumero());
+            stmt.setInt(2, fatura.getFornecedor().getId());
+            stmt.setInt(3, idMotivo);
+            stmt.setDate(4, Date.valueOf(fatura.getDataLancamento()));
+            stmt.setDate(5, Date.valueOf(fatura.getDataVencimento()));
+            stmt.setDouble(6, fatura.getValor());
             stmt.executeUpdate();
         }
     }
@@ -73,8 +66,9 @@ public class FaturaDAO {
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setInt(1, numeroFatura);
-                stmt.executeUpdate();
+
+            stmt.setInt(1, numeroFatura);
+            stmt.executeUpdate();
         }
     }
 
@@ -95,10 +89,12 @@ public class FaturaDAO {
         try {
             conn.setAutoCommit(false);
 
+            int idMotivo = buscarIdMotivoPorNome(conn, fatura.getMotivoFatura());
+
             try (PreparedStatement stmtInsert = conn.prepareStatement(sqlInsertFatura)) {
                 stmtInsert.setInt(1, fatura.getNumero());
                 stmtInsert.setInt(2, fatura.getFornecedor().getId());
-                stmtInsert.setInt(3, fatura.getIdMotivo());
+                stmtInsert.setInt(3, idMotivo);
                 stmtInsert.setDate(4, Date.valueOf(fatura.getDataLancamento()));
                 stmtInsert.setDate(5, Date.valueOf(fatura.getDataVencimento()));
                 stmtInsert.setDouble(6, fatura.getValor());
@@ -130,5 +126,27 @@ public class FaturaDAO {
                 conn.close();
             }
         }
+    }
+
+    private Fatura montarFatura(ResultSet rs, Fornecedor fornecedor) throws SQLException {
+        Fatura fatura = new Fatura();
+        fatura.setNumero(rs.getInt("nroFatura"));
+        fatura.setDataLancamento(rs.getDate("dataLancamento").toString());
+        fatura.setDataVencimento(rs.getDate("dataVencimento").toString());
+        fatura.setValor(rs.getDouble("valorFatura"));
+        fatura.setMotivoFatura(rs.getString("nomeMotivo"));
+        fatura.setFornecedor(fornecedor);
+        return fatura;
+    }
+
+    public int buscarIdMotivoPorNome(Connection conn, String nomeMotivo) throws SQLException {
+        String sql = "SELECT \"idMotivo\" FROM \"MotivoFatura\" WHERE \"nomeMotivo\" = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, nomeMotivo);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getInt("idMotivo");
+            }
+        }
+        throw new SQLException("Motivo de fatura não encontrado: " + nomeMotivo);
     }
 }
