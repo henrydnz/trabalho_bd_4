@@ -15,6 +15,28 @@ public class FornecedorDAO {
 
     private final EnderecoDAO enderecoDAO = new EnderecoDAO();
 
+    public Fornecedor buscarPorId(int idFornecedor) throws SQLException {
+        String sql = """
+        SELECT "idFornecedor", "nomeFornecedor", "CNPJ", "idEndereco",
+               "numero", "complemento", "saldoAPagar"
+        FROM "Fornecedor"
+        WHERE "idFornecedor" = ?
+        """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, idFornecedor);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return montarFornecedor(conn, rs);
+                }
+            }
+        }
+        return null;
+    }
+
     public Fornecedor buscarPorNome(String nomeFornecedor) throws SQLException {
         String sql = """
             SELECT "idFornecedor", "nomeFornecedor", "CNPJ", "idEndereco",

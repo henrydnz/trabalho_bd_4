@@ -16,6 +16,31 @@ public class FaturaDAO {
 
     private final FornecedorDAO fornecedorDAO = new FornecedorDAO();
 
+    public Fatura buscarPorId(int nroFatura) throws SQLException {
+        String sql = """
+        SELECT f."nroFatura", f."idFornecedor", f."dataLancamento",
+               f."dataVencimento", f."valorFatura", m."nomeMotivo"
+        FROM "Fatura" f
+        JOIN "MotivoFatura" m ON f."idMotivo" = m."idMotivo"
+        WHERE f."nroFatura" = ?
+        """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, nroFatura);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int idFornecedor = rs.getInt("idFornecedor");
+                    Fornecedor fornecedor = fornecedorDAO.buscarPorId(idFornecedor);
+                    return montarFatura(rs, fornecedor);
+                }
+            }
+        }
+        return null;
+    }
+
     public List<Fatura> listarPorFornecedor(Fornecedor fornecedor) throws SQLException {
         String sql = """
             SELECT f."nroFatura", f."dataLancamento", f."dataVencimento", f."valorFatura",
