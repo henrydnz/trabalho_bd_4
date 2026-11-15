@@ -38,15 +38,19 @@ public class EnderecoDAO {
     }
 
     public int inserir(Endereco endereco, String cep) throws SQLException {
+        try (Connection conn = DBConnection.getConnection()) {
+            return inserir(conn, endereco, cep);
+        }
+    }
+
+    public int inserir(Connection conn, Endereco endereco, String cep) throws SQLException {
         String sql = """
-            INSERT INTO "Endereco" ("idCidade", "idBairro", "idRua", "cep")
-            VALUES (?, ?, ?, ?)
-            RETURNING "idEndereco"
-            """;
+        INSERT INTO "Endereco" ("idCidade", "idBairro", "idRua", "cep")
+        VALUES (?, ?, ?, ?)
+        RETURNING "idEndereco"
+        """;
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             int idEstado         = buscarIdEstadoPorUF(conn, endereco.getEstado());
             int idCidade         = buscarIdCidadePorNome(conn, endereco.getCidade(), idEstado);
             int idBairro         = buscarIdBairroPorNome(conn, endereco.getBairro());
