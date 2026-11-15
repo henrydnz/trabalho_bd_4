@@ -6,18 +6,21 @@ import java.sql.SQLException;
 
 public class DBConnection {
     private static final String URL = "jdbc:postgresql://ep-seu-endpoint.aws.neon.tech/neondb?sslmode=require";
-    private static final String USER = "neondb_owner";
-    private static final String PASSWORD = "sua_senha_aqui";
+
+    // Sem 'final' para permitir trocar em tempo de execução
+    private static String user = "user_total";
+    private static String password = "Bd_Trabalho4#2026";
 
     private DBConnection() {}
 
-    // Conexão padrão (para T4A, T4B e T4D)
-    public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+    // Metodo para trocar o perfil de acesso no T4C
+    public static void setCredenciais(String novoUser, String novaPassword) {
+        user = novoUser;
+        password = novaPassword;
+        System.out.println(">> Perfil alterado para: " + user);
     }
 
-    // Conexão com usuário específico (para testar os perfis de login no T4C)
-    public static Connection getConnection(String user, String password) throws SQLException {
+    public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, user, password);
     }
 }
