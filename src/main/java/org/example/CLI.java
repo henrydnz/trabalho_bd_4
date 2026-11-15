@@ -1,7 +1,7 @@
 package org.example;
 
 import org.example.dao.EnderecoDAO;
-import org.example.singleton.DBConnection;
+import org.example.utils.DBConnection;
 
 import java.sql.Connection;
 

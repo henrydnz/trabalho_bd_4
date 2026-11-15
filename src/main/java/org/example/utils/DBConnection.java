@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBConnection {
-    private static final String URL = "jdbc:postgresql://ep-seu-endpoint.aws.neon.tech/neondb?sslmode=require";
+    private static final String URL = "jdbc:postgresql://ep-square-sound-b6aauw8o.c-2.sa-east-1.aws.neon.tech/neondb?sslmode=require";
 
     // Sem 'final' para permitir trocar em tempo de execução
     private static String user = "user_total";
