@@ -3,7 +3,7 @@ package org.example.model;
 public class Fatura {
     private Integer numero;
     private Fornecedor fornecedor;
-    private Integer idMotivo;
+    private String nomeMotivo;
     private String dataLancamento;
     private String dataVencimento;
     private Double valor;
@@ -24,12 +24,12 @@ public class Fatura {
         this.fornecedor = fornecedor;
     }
 
-    public Integer getIdMotivo() {
-        return idMotivo;
+    public String getNomeMotivo() {
+        return nomeMotivo;
     }
 
-    public void setIdMotivo(Integer idMotivo) {
-        this.idMotivo = idMotivo;
+    public void setNomeMotivo(String nomeMotivo) {
+        this.nomeMotivo = nomeMotivo;
     }
 
     public String getDataLancamento() {

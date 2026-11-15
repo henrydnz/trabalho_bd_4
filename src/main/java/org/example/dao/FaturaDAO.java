@@ -14,6 +14,8 @@ import java.util.List;
 
 public class FaturaDAO {
 
+    private final FornecedorDAO fornecedorDAO = new FornecedorDAO();
+
     public List<Fatura> listarPorFornecedor(Fornecedor fornecedor) throws SQLException {
         String sql = """
             SELECT f."nroFatura", f."dataLancamento", f."dataVencimento", f."valorFatura",
@@ -29,7 +31,8 @@ public class FaturaDAO {
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, fornecedor.getId());
+            int idFornecedor = fornecedorDAO.buscarIdFornecedorPorNome(conn, fornecedor.getNome());
+            stmt.setInt(1, idFornecedor);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -49,10 +52,11 @@ public class FaturaDAO {
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            int idMotivo = buscarIdMotivoPorNome(conn, fatura.getMotivoFatura());
+            int idFornecedor = fornecedorDAO.buscarIdFornecedorPorNome(conn, fatura.getFornecedor().getNome());
+            int idMotivo     = buscarIdMotivoPorNome(conn, fatura.getNomeMotivo());
 
             stmt.setInt(1, fatura.getNumero());
-            stmt.setInt(2, fatura.getFornecedor().getId());
+            stmt.setInt(2, idFornecedor);
             stmt.setInt(3, idMotivo);
             stmt.setDate(4, Date.valueOf(fatura.getDataLancamento()));
             stmt.setDate(5, Date.valueOf(fatura.getDataVencimento()));
@@ -89,11 +93,12 @@ public class FaturaDAO {
         try {
             conn.setAutoCommit(false);
 
-            int idMotivo = buscarIdMotivoPorNome(conn, fatura.getMotivoFatura());
+            int idFornecedor = fornecedorDAO.buscarIdFornecedorPorNome(conn, fatura.getFornecedor().getNome());
+            int idMotivo     = buscarIdMotivoPorNome(conn, fatura.getNomeMotivo());
 
             try (PreparedStatement stmtInsert = conn.prepareStatement(sqlInsertFatura)) {
                 stmtInsert.setInt(1, fatura.getNumero());
-                stmtInsert.setInt(2, fatura.getFornecedor().getId());
+                stmtInsert.setInt(2, idFornecedor);
                 stmtInsert.setInt(3, idMotivo);
                 stmtInsert.setDate(4, Date.valueOf(fatura.getDataLancamento()));
                 stmtInsert.setDate(5, Date.valueOf(fatura.getDataVencimento()));
@@ -103,7 +108,7 @@ public class FaturaDAO {
 
             try (PreparedStatement stmtUpdate = conn.prepareStatement(sqlUpdateSaldo)) {
                 stmtUpdate.setDouble(1, fatura.getValor());
-                stmtUpdate.setInt(2, fatura.getFornecedor().getId());
+                stmtUpdate.setInt(2, idFornecedor);
                 stmtUpdate.executeUpdate();
             }
 
@@ -134,7 +139,7 @@ public class FaturaDAO {
         fatura.setDataLancamento(rs.getDate("dataLancamento").toString());
         fatura.setDataVencimento(rs.getDate("dataVencimento").toString());
         fatura.setValor(rs.getDouble("valorFatura"));
-        fatura.setMotivoFatura(rs.getString("nomeMotivo"));
+        fatura.setNomeMotivo(rs.getString("nomeMotivo"));
         fatura.setFornecedor(fornecedor);
         return fatura;
     }

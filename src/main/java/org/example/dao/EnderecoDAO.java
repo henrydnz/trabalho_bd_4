@@ -47,10 +47,11 @@ public class EnderecoDAO {
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            int idEstado = buscarIdEstadoPorUF(conn, endereco.getEstado());
-            int idCidade = buscarIdCidadePorNome(conn, endereco.getCidade(), idEstado);
-            int idBairro = buscarIdBairroPorNome(conn, endereco.getBairro());
-            int idRua    = buscarIdRuaPorNome(conn, endereco.getRua());
+            int idEstado         = buscarIdEstadoPorUF(conn, endereco.getEstado());
+            int idCidade         = buscarIdCidadePorNome(conn, endereco.getCidade(), idEstado);
+            int idBairro         = buscarIdBairroPorNome(conn, endereco.getBairro());
+            int idTipoLogradouro = buscarIdTipoLogradouroPorNome(conn, endereco.getTipoLogradouro());
+            int idRua            = buscarIdRuaPorNome(conn, endereco.getRua(), idTipoLogradouro);
 
             stmt.setInt(1, idCidade);
             stmt.setInt(2, idBairro);
@@ -76,7 +77,7 @@ public class EnderecoDAO {
         );
     }
 
-    // --- Buscas auxiliares por nome ---
+    // --- Buscas auxiliares por nome / UF ---
 
     public int buscarIdEstadoPorUF(Connection conn, String siglaUF) throws SQLException {
         String sql = "SELECT \"idEstado\" FROM \"Estado\" WHERE \"siglaUF\" = ?";
@@ -112,17 +113,6 @@ public class EnderecoDAO {
         throw new SQLException("Bairro não encontrado: " + nomeBairro);
     }
 
-    public int buscarIdRuaPorNome(Connection conn, String nomeRua) throws SQLException {
-        String sql = "SELECT \"idRua\" FROM \"Rua\" WHERE \"nomeRua\" = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, nomeRua);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getInt("idRua");
-            }
-        }
-        throw new SQLException("Rua não encontrada: " + nomeRua);
-    }
-
     public int buscarIdTipoLogradouroPorNome(Connection conn, String nomeTipo) throws SQLException {
         String sql = "SELECT \"idTipoLogradouro\" FROM \"TipoLogradouro\" WHERE \"nomeTipoLogradouro\" = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -132,5 +122,17 @@ public class EnderecoDAO {
             }
         }
         throw new SQLException("Tipo de logradouro não encontrado: " + nomeTipo);
+    }
+
+    public int buscarIdRuaPorNome(Connection conn, String nomeRua, int idTipoLogradouro) throws SQLException {
+        String sql = "SELECT \"idRua\" FROM \"Rua\" WHERE \"nomeRua\" = ? AND \"idTipoLogradouro\" = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, nomeRua);
+            stmt.setInt(2, idTipoLogradouro);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getInt("idRua");
+            }
+        }
+        throw new SQLException("Rua não encontrada: " + nomeRua);
     }
 }

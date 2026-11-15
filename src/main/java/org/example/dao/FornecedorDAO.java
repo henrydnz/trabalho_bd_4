@@ -15,28 +15,6 @@ public class FornecedorDAO {
 
     private final EnderecoDAO enderecoDAO = new EnderecoDAO();
 
-    public Fornecedor buscarPorId(int idFornecedor) throws SQLException {
-        String sql = """
-            SELECT "idFornecedor", "nomeFornecedor", "CNPJ", "idEndereco",
-                   "numero", "complemento", "saldoAPagar"
-            FROM "Fornecedor"
-            WHERE "idFornecedor" = ?
-            """;
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, idFornecedor);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return montarFornecedor(conn, rs);
-                }
-            }
-        }
-        return null;
-    }
-
     public Fornecedor buscarPorNome(String nomeFornecedor) throws SQLException {
         String sql = """
             SELECT "idFornecedor", "nomeFornecedor", "CNPJ", "idEndereco",
@@ -80,6 +58,17 @@ public class FornecedorDAO {
         return fornecedores;
     }
 
+    public int buscarIdFornecedorPorNome(Connection conn, String nomeFornecedor) throws SQLException {
+        String sql = "SELECT \"idFornecedor\" FROM \"Fornecedor\" WHERE \"nomeFornecedor\" = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, nomeFornecedor);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getInt("idFornecedor");
+            }
+        }
+        throw new SQLException("Fornecedor não encontrado: " + nomeFornecedor);
+    }
+
     private Fornecedor montarFornecedor(Connection conn, ResultSet rs) throws SQLException {
         int idFornecedor = rs.getInt("idFornecedor");
         int idEndereco   = rs.getInt("idEndereco");
@@ -88,7 +77,7 @@ public class FornecedorDAO {
         List<String> emails    = listarEmails(conn, idFornecedor);
         List<String> telefones = listarTelefones(conn, idFornecedor);
 
-        Fornecedor f = new Fornecedor(
+        return new Fornecedor(
                 telefones,
                 emails,
                 rs.getDouble("saldoAPagar"),
@@ -98,8 +87,6 @@ public class FornecedorDAO {
                 rs.getString("CNPJ"),
                 rs.getString("nomeFornecedor")
         );
-        f.setId(idFornecedor);
-        return f;
     }
 
     private List<String> listarEmails(Connection conn, int idFornecedor) throws SQLException {
