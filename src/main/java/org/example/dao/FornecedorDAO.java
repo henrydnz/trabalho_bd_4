@@ -148,7 +148,8 @@ public class FornecedorDAO {
         try {
             conn.setAutoCommit(false);
 
-            int idEndereco = enderecoDAO.inserir(fornecedor.getEndereco());
+            int idEndereco = enderecoDAO.inserir(conn, fornecedor.getEndereco());
+
             int idFornecedor;
             try (PreparedStatement stmt = conn.prepareStatement(sqlFornecedor)) {
                 stmt.setString(1, fornecedor.getNome());
