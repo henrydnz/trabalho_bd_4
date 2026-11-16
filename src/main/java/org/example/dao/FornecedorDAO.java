@@ -123,7 +123,7 @@ public class FornecedorDAO {
     }
 
     private List<String> listarEmails(Connection conn, int idFornecedor) throws SQLException {
-        String sql = "SELECT \"email\" FROM \"Email\" WHERE \"idFornecedor\" = ?";
+        String sql = "SELECT \"email\" FROM \"EmailFornecedor\" WHERE \"idFornecedor\" = ?";
         List<String> emails = new ArrayList<>();
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -148,7 +148,7 @@ public class FornecedorDAO {
         try {
             conn.setAutoCommit(false);
 
-            int idEndereco = enderecoDAO.inserir(conn, fornecedor.getEndereco();
+            int idEndereco = enderecoDAO.inserir(fornecedor.getEndereco());
             int idFornecedor;
             try (PreparedStatement stmt = conn.prepareStatement(sqlFornecedor)) {
                 stmt.setString(1, fornecedor.getNome());
@@ -185,7 +185,7 @@ public class FornecedorDAO {
     private void inserirEmails(Connection conn, int idFornecedor, List<String> emails) throws SQLException {
         if (emails == null || emails.isEmpty()) return;
 
-        String sql = "INSERT INTO \"Email\" (\"email\", \"idFornecedor\") VALUES (?, ?)";
+        String sql = "INSERT INTO \"EmailFornecedor\" (\"email\", \"idFornecedor\") VALUES (?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             for (String email : emails) {
                 stmt.setString(1, email);
@@ -198,7 +198,7 @@ public class FornecedorDAO {
     private void inserirTelefones(Connection conn, int idFornecedor, List<String> telefones) throws SQLException {
         if (telefones == null || telefones.isEmpty()) return;
 
-        String sql = "INSERT INTO \"Telefone\" (\"idDDD\", \"idFornecedor\", \"numeroTelefone\") VALUES (?, ?, ?)";
+        String sql = "INSERT INTO \"TelefoneFornecedor\" (\"idDDD\", \"idFornecedor\", \"numeroTelefone\") VALUES (?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             for (String tel : telefones) {
                 // Remove parênteses, espaços e traços (aceita "(45) 99999-9999" ou "45999999999")
@@ -219,7 +219,7 @@ public class FornecedorDAO {
     private List<String> listarTelefones(Connection conn, int idFornecedor) throws SQLException {
         String sql = """
             SELECT d."ddd", t."numeroTelefone"
-            FROM "Telefone" t
+            FROM "TelefoneFornecedor" t
             JOIN "DDD" d ON t."idDDD" = d."idDDD"
             WHERE t."idFornecedor" = ?
             """;

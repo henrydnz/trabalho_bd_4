@@ -46,7 +46,7 @@ public class EnderecoDAO {
 
         try (   Connection conn = DBConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
-            int idEstado         = buscarIdEstadoPorUF(conn, endereco.getEstado());
+            int idEstado         = buscarIdEstadoPorNome(conn, endereco.getEstado());
             int idCidade         = buscarIdCidadePorNome(conn, endereco.getCidade(), idEstado);
             int idBairro         = buscarIdBairroPorNome(conn, endereco.getBairro());
             int idTipoLogradouro = buscarIdTipoLogradouroPorNome(conn, endereco.getTipoLogradouro());
@@ -78,15 +78,15 @@ public class EnderecoDAO {
 
     // --- Buscas auxiliares por nome / UF ---
 
-    public int buscarIdEstadoPorUF(Connection conn, String siglaUF) throws SQLException {
-        String sql = "SELECT \"idEstado\" FROM \"Estado\" WHERE \"siglaUF\" = ?";
+    public int buscarIdEstadoPorNome(Connection conn, String siglaUF) throws SQLException {
+        String sql = "SELECT \"idEstado\" FROM \"Estado\" WHERE \"nomeEstado\" = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, siglaUF.toUpperCase());
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) return rs.getInt("idEstado");
             }
         }
-        throw new SQLException("Estado (UF) não encontrado: " + siglaUF);
+        throw new SQLException("Estado não encontrado: " + siglaUF);
     }
 
     public int buscarIdCidadePorNome(Connection conn, String nomeCidade, int idEstado) throws SQLException {
