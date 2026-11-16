@@ -37,20 +37,15 @@ public class EnderecoDAO {
         return null;
     }
 
-    public int inserir(Endereco endereco, String cep) throws SQLException {
-        try (Connection conn = DBConnection.getConnection()) {
-            return inserir(conn, endereco, cep);
-        }
-    }
-
-    public int inserir(Connection conn, Endereco endereco, String cep) throws SQLException {
+    public int inserir(Endereco endereco) throws SQLException {
         String sql = """
         INSERT INTO "Endereco" ("idCidade", "idBairro", "idRua", "cep")
         VALUES (?, ?, ?, ?)
         RETURNING "idEndereco"
         """;
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (   Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             int idEstado         = buscarIdEstadoPorUF(conn, endereco.getEstado());
             int idCidade         = buscarIdCidadePorNome(conn, endereco.getCidade(), idEstado);
             int idBairro         = buscarIdBairroPorNome(conn, endereco.getBairro());
@@ -60,7 +55,7 @@ public class EnderecoDAO {
             stmt.setInt(1, idCidade);
             stmt.setInt(2, idBairro);
             stmt.setInt(3, idRua);
-            stmt.setString(4, cep);
+            stmt.setString(4, endereco.getCep());
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {

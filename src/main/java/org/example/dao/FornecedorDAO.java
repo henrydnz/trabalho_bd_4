@@ -137,7 +137,7 @@ public class FornecedorDAO {
         return emails;
     }
 
-    public void inserir(Fornecedor fornecedor, String cep) throws SQLException {
+    public void inserir(Fornecedor fornecedor) throws SQLException {
         String sqlFornecedor = """
         INSERT INTO "Fornecedor" ("nomeFornecedor", "CNPJ", "idEndereco", "numero", "complemento", "saldoAPagar")
         VALUES (?, ?, ?, ?, ?, ?)
@@ -148,8 +148,7 @@ public class FornecedorDAO {
         try {
             conn.setAutoCommit(false);
 
-            int idEndereco = enderecoDAO.inserir(conn, fornecedor.getEndereco(), cep);
-
+            int idEndereco = enderecoDAO.inserir(conn, fornecedor.getEndereco();
             int idFornecedor;
             try (PreparedStatement stmt = conn.prepareStatement(sqlFornecedor)) {
                 stmt.setString(1, fornecedor.getNome());
