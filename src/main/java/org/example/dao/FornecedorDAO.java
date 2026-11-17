@@ -17,8 +17,11 @@ public class FornecedorDAO {
 
     public Fornecedor buscarPorId(int idFornecedor) throws SQLException {
         String sql = """
-        SELECT "idFornecedor", "nomeFornecedor", "CNPJ", "idEndereco",
-               "numero", "complemento", "saldoAPagar"
+        SELECT "idFornecedor", "nomeFornecedor", "CNPJ",
+               ("enderecoFornecedor")."idEndereco",
+               ("enderecoFornecedor")."numero",
+               ("enderecoFornecedor")."complemento",
+               "saldoAPagar"
         FROM "Fornecedor"
         WHERE "idFornecedor" = ?
         """;
@@ -37,32 +40,13 @@ public class FornecedorDAO {
         return null;
     }
 
-    public Fornecedor buscarPorNome(String nomeFornecedor) throws SQLException {
-        String sql = """
-            SELECT "idFornecedor", "nomeFornecedor", "CNPJ", "idEndereco",
-                   "numero", "complemento", "saldoAPagar"
-            FROM "Fornecedor"
-            WHERE "nomeFornecedor" = ?
-            """;
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, nomeFornecedor);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return montarFornecedor(conn, rs);
-                }
-            }
-        }
-        return null;
-    }
-
     public List<Fornecedor> listarTodos() throws SQLException {
         String sql = """
-            SELECT "idFornecedor", "nomeFornecedor", "CNPJ", "idEndereco",
-                   "numero", "complemento", "saldoAPagar"
+            SELECT "idFornecedor", "nomeFornecedor", "CNPJ",
+                   ("enderecoFornecedor")."idEndereco",
+                   ("enderecoFornecedor")."numero",
+                   ("enderecoFornecedor")."complemento",
+                   "saldoAPagar"
             FROM "Fornecedor"
             ORDER BY "nomeFornecedor"
             """;
@@ -110,7 +94,7 @@ public class FornecedorDAO {
         List<String> emails    = listarEmails(conn, idFornecedor);
         List<String> telefones = listarTelefones(conn, idFornecedor);
 
-        return new Fornecedor(
+        Fornecedor fornecedor = new Fornecedor(
                 telefones,
                 emails,
                 rs.getDouble("saldoAPagar"),
@@ -120,6 +104,8 @@ public class FornecedorDAO {
                 rs.getString("CNPJ"),
                 rs.getString("nomeFornecedor")
         );
+        fornecedor.setId(idFornecedor);
+        return fornecedor;
     }
 
     private List<String> listarEmails(Connection conn, int idFornecedor) throws SQLException {
@@ -139,8 +125,8 @@ public class FornecedorDAO {
 
     public void inserir(Fornecedor fornecedor) throws SQLException {
         String sqlFornecedor = """
-        INSERT INTO "Fornecedor" ("nomeFornecedor", "CNPJ", "idEndereco", "numero", "complemento", "saldoAPagar")
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO "Fornecedor" ("nomeFornecedor", "CNPJ", "enderecoFornecedor", "saldoAPagar")
+        VALUES (?, ?, ROW(?, ?, ?)::"EndEspFornecedor", ?)
         RETURNING "idFornecedor"
         """;
 
@@ -154,9 +140,9 @@ public class FornecedorDAO {
             try (PreparedStatement stmt = conn.prepareStatement(sqlFornecedor)) {
                 stmt.setString(1, fornecedor.getNome());
                 stmt.setString(2, fornecedor.getCnpj());
-                stmt.setInt(3, idEndereco);
-                stmt.setInt(4, fornecedor.getNumeroEndereco());
-                stmt.setString(5, fornecedor.getComplementoEndereco());
+                stmt.setInt(3, fornecedor.getNumeroEndereco());
+                stmt.setString(4, fornecedor.getComplementoEndereco());
+                stmt.setInt(5, idEndereco);
                 stmt.setDouble(6, fornecedor.getSaldoAPagar());
 
                 try (ResultSet rs = stmt.executeQuery()) {

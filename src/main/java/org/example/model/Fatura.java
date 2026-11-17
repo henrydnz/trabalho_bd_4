@@ -1,58 +1,28 @@
 package org.example.model;
 
+import java.time.LocalDate;
+
 public class Fatura {
-    private Integer numero;
-    private Fornecedor fornecedor;
-    private String nomeMotivo;
-    private String dataLancamento;
-    private String dataVencimento;
-    private Double valor;
+    private final Integer numero;
+    private final Fornecedor fornecedor;
+    private final String nomeMotivo;
+    private final LocalDate dataLancamento;
+    private final LocalDate dataVencimento;
+    private final Double valor;
 
-    public Integer getNumero() {
-        return numero;
-    }
-
-    public void setNumero(Integer numero) {
+    public Fatura(Integer numero, Fornecedor fornecedor, String nomeMotivo, LocalDate dataLancamento, LocalDate dataVencimento, Double valor) {
         this.numero = numero;
-    }
-
-    public Fornecedor getFornecedor() {
-        return fornecedor;
-    }
-
-    public void setFornecedor(Fornecedor fornecedor) {
         this.fornecedor = fornecedor;
-    }
-
-    public String getNomeMotivo() {
-        return nomeMotivo;
-    }
-
-    public void setNomeMotivo(String nomeMotivo) {
         this.nomeMotivo = nomeMotivo;
-    }
-
-    public String getDataLancamento() {
-        return dataLancamento;
-    }
-
-    public void setDataLancamento(String dataLancamento) {
         this.dataLancamento = dataLancamento;
-    }
-
-    public String getDataVencimento() {
-        return dataVencimento;
-    }
-
-    public void setDataVencimento(String dataVencimento) {
         this.dataVencimento = dataVencimento;
-    }
-
-    public Double getValor() {
-        return valor;
-    }
-
-    public void setValor(Double valor) {
         this.valor = valor;
     }
+
+    public Integer getNumero() {return numero;}
+    public Fornecedor getFornecedor() {return fornecedor;}
+    public String getNomeMotivo() {return nomeMotivo;}
+    public LocalDate getDataLancamento() {return dataLancamento;}
+    public LocalDate getDataVencimento() {return dataVencimento;}
+    public Double getValor() {return valor;}
 }

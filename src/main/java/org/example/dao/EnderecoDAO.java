@@ -37,12 +37,6 @@ public class EnderecoDAO {
         return null;
     }
 
-    public int inserir(Endereco endereco) throws SQLException {
-        try (Connection conn = DBConnection.getConnection()) {
-            return inserir(conn, endereco);
-        }
-    }
-
     // Sobrecarga usada pela transação do FornecedorDAO (inserção em cascata)
     public int inserir(Connection conn, Endereco endereco) throws SQLException {
         String sql = """
@@ -83,8 +77,6 @@ public class EnderecoDAO {
                 rs.getString("cep")
         );
     }
-
-    // --- Cascata: busca o ID se já existir; senão insere e retorna o novo ID ---
 
     private int obterOuInserirEstado(Connection conn, String nomeEstado, String siglaUF) throws SQLException {
         String sqlSelect = "SELECT \"idEstado\" FROM \"Estado\" WHERE \"nomeEstado\" = ?";
@@ -184,168 +176,5 @@ public class EnderecoDAO {
             }
         }
         throw new SQLException("Falha ao obter/inserir rua: " + nomeRua);
-    }
-
-    // --- Buscas auxiliares por nome ---
-
-    public int buscarIdEstadoPorNome(Connection conn, String nomeEstado) throws SQLException {
-        String sql = "SELECT \"idEstado\" FROM \"Estado\" WHERE \"nomeEstado\" = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, nomeEstado);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getInt("idEstado");
-            }
-        }
-        throw new SQLException("Estado não encontrado: " + nomeEstado);
-    }
-
-    public int buscarIdCidadePorNome(Connection conn, String nomeCidade, int idEstado) throws SQLException {
-        String sql = "SELECT \"idCidade\" FROM \"Cidade\" WHERE \"nomeCidade\" = ? AND \"idEstado\" = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, nomeCidade);
-            stmt.setInt(2, idEstado);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getInt("idCidade");
-            }
-        }
-        throw new SQLException("Cidade não encontrada: " + nomeCidade);
-    }
-
-    public int buscarIdBairroPorNome(Connection conn, String nomeBairro) throws SQLException {
-        String sql = "SELECT \"idBairro\" FROM \"Bairro\" WHERE \"nomeBairro\" = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, nomeBairro);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getInt("idBairro");
-            }
-        }
-        throw new SQLException("Bairro não encontrado: " + nomeBairro);
-    }
-
-    public int buscarIdTipoLogradouroPorNome(Connection conn, String nomeTipo) throws SQLException {
-        String sql = "SELECT \"idTipoLogradouro\" FROM \"TipoLogradouro\" WHERE \"nomeTipoLogradouro\" = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, nomeTipo);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getInt("idTipoLogradouro");
-            }
-        }
-        throw new SQLException("Tipo de logradouro não encontrado: " + nomeTipo);
-    }
-
-    public int buscarIdRuaPorNome(Connection conn, String nomeRua, int idTipoLogradouro) throws SQLException {
-        String sql = "SELECT \"idRua\" FROM \"Rua\" WHERE \"nomeRua\" = ? AND \"idTipoLogradouro\" = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, nomeRua);
-            stmt.setInt(2, idTipoLogradouro);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getInt("idRua");
-            }
-        }
-        throw new SQLException("Rua não encontrada: " + nomeRua);
-    }
-
-    // --- Métodos individuais de inserção das tabelas auxiliares ---
-
-    public int inserirEstado(String nomeEstado, String siglaUF) throws SQLException {
-        String sql = """
-            INSERT INTO "Estado" ("nomeEstado", "siglaUF")
-            VALUES (?, ?)
-            RETURNING "idEstado"
-            """;
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, nomeEstado);
-            stmt.setString(2, siglaUF.toUpperCase());
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getInt("idEstado");
-            }
-        }
-        throw new SQLException("Falha ao inserir estado: " + nomeEstado);
-    }
-
-    public int inserirCidade(String nomeCidade, String nomeEstado) throws SQLException {
-        String sql = """
-            INSERT INTO "Cidade" ("nomeCidade", "idEstado")
-            VALUES (?, ?)
-            RETURNING "idCidade"
-            """;
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            int idEstado = buscarIdEstadoPorNome(conn, nomeEstado);
-
-            stmt.setString(1, nomeCidade);
-            stmt.setInt(2, idEstado);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getInt("idCidade");
-            }
-        }
-        throw new SQLException("Falha ao inserir cidade: " + nomeCidade);
-    }
-
-    public int inserirBairro(String nomeBairro) throws SQLException {
-        String sql = """
-            INSERT INTO "Bairro" ("nomeBairro")
-            VALUES (?)
-            RETURNING "idBairro"
-            """;
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, nomeBairro);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getInt("idBairro");
-            }
-        }
-        throw new SQLException("Falha ao inserir bairro: " + nomeBairro);
-    }
-
-    public int inserirTipoLogradouro(String nomeTipoLogradouro) throws SQLException {
-        String sql = """
-            INSERT INTO "TipoLogradouro" ("nomeTipoLogradouro")
-            VALUES (?)
-            RETURNING "idTipoLogradouro"
-            """;
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, nomeTipoLogradouro);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getInt("idTipoLogradouro");
-            }
-        }
-        throw new SQLException("Falha ao inserir tipo de logradouro: " + nomeTipoLogradouro);
-    }
-
-    public int inserirRua(String nomeRua, String nomeTipoLogradouro) throws SQLException {
-        String sql = """
-            INSERT INTO "Rua" ("nomeRua", "idTipoLogradouro")
-            VALUES (?, ?)
-            RETURNING "idRua"
-            """;
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            int idTipoLogradouro = buscarIdTipoLogradouroPorNome(conn, nomeTipoLogradouro);
-
-            stmt.setString(1, nomeRua);
-            stmt.setInt(2, idTipoLogradouro);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getInt("idRua");
-            }
-        }
-        throw new SQLException("Falha ao inserir rua: " + nomeRua);
     }
 }

@@ -5,15 +5,13 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBConnection {
-    private static final String URL = "jdbc:postgresql://ep-square-sound-b6aauw8o.c-2.sa-east-1.aws.neon.tech/neondb?sslmode=require";
+    private static final String URL = "jdbc:postgresql://ep-aged-sea-beogkik0.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&currentSchema=public";
 
-    // Sem 'final' para permitir trocar em tempo de execução
     private static String user = "user_total";
     private static String password = "Bd_Trabalho4#2026";
 
     private DBConnection() {}
 
-    // Metodo para trocar o perfil de acesso no T4C
     public static void setCredenciais(String novoUser, String novaPassword) {
         user = novoUser;
         password = novaPassword;
@@ -23,4 +21,10 @@ public class DBConnection {
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, user, password);
     }
+
+    public static void testConnection(String user, String password) throws SQLException {
+        DriverManager.getConnection(URL, user, password);
+    }
+
+    public static String getUser(){return user;}
 }

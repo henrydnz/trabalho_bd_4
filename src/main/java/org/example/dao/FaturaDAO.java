@@ -9,6 +9,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,28 +69,6 @@ public class FaturaDAO {
         return faturas;
     }
 
-    public void inserir(Fatura fatura) throws SQLException {
-        String sql = """
-            INSERT INTO "Fatura" ("nroFatura", "idFornecedor", "idMotivo", "dataLancamento", "dataVencimento", "valorFatura")
-            VALUES (?, ?, ?, ?, ?, ?)
-            """;
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            int idFornecedor = fornecedorDAO.buscarIdFornecedorPorNome(conn, fatura.getFornecedor().getNome());
-            int idMotivo     = buscarIdMotivoPorNome(conn, fatura.getNomeMotivo());
-
-            stmt.setInt(1, fatura.getNumero());
-            stmt.setInt(2, idFornecedor);
-            stmt.setInt(3, idMotivo);
-            stmt.setDate(4, Date.valueOf(fatura.getDataLancamento()));
-            stmt.setDate(5, Date.valueOf(fatura.getDataVencimento()));
-            stmt.setDouble(6, fatura.getValor());
-            stmt.executeUpdate();
-        }
-    }
-
     public void deletar(int numeroFatura) throws SQLException {
         String sql = "DELETE FROM \"Fatura\" WHERE \"nroFatura\" = ?";
 
@@ -142,6 +121,7 @@ public class FaturaDAO {
                 System.out.println("[T4D - OK] Transação confirmada com COMMIT.");
             } else if (modo == 2) {
                 System.out.println("[T4D - INCOMPLETA] Encerrando programa sem COMMIT nem ROLLBACK...");
+                System.exit(0);
             } else if (modo == 3) {
                 conn.rollback();
                 System.out.println("[T4D - ROLLBACK] Transação abortada intencionalmente com ROLLBACK.");
@@ -151,22 +131,52 @@ public class FaturaDAO {
             conn.rollback();
             throw e;
         } finally {
-            if (conn != null && !conn.isClosed()) {
-                conn.setAutoCommit(true);
-                conn.close();
-            }
+            if (conn != null && !conn.isClosed()) conn.close();
         }
     }
 
+    public List<String[]> consultarTotaisPorMotivoNoPeriodo(LocalDate dataInicio, LocalDate dataFim) throws SQLException {
+        String sql = """
+            SELECT m."nomeMotivo",
+                   COUNT(f."nroFatura") AS qtd_faturas,
+                   COALESCE(SUM(f."valorFatura"), 0) AS total_valor
+            FROM "Fatura" f
+            JOIN "MotivoFatura" m ON f."idMotivo" = m."idMotivo"
+            WHERE f."dataLancamento" BETWEEN ? AND ?
+            GROUP BY m."nomeMotivo"
+            ORDER BY total_valor DESC
+            """;
+
+        List<String[]> resultados = new ArrayList<>();
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDate(1, Date.valueOf(dataInicio));
+            stmt.setDate(2, Date.valueOf(dataFim));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    resultados.add(new String[]{
+                            rs.getString("nomeMotivo"),
+                            String.valueOf(rs.getInt("qtd_faturas")),
+                            String.format("R$ %.2f", rs.getDouble("total_valor"))
+                    });
+                }
+            }
+        }
+        return resultados;
+    }
+
     private Fatura montarFatura(ResultSet rs, Fornecedor fornecedor) throws SQLException {
-        Fatura fatura = new Fatura();
-        fatura.setNumero(rs.getInt("nroFatura"));
-        fatura.setDataLancamento(rs.getDate("dataLancamento").toString());
-        fatura.setDataVencimento(rs.getDate("dataVencimento").toString());
-        fatura.setValor(rs.getDouble("valorFatura"));
-        fatura.setNomeMotivo(rs.getString("nomeMotivo"));
-        fatura.setFornecedor(fornecedor);
-        return fatura;
+        return new Fatura(
+                rs.getInt("nroFatura"),
+                fornecedor,
+                rs.getString("nomeMotivo"),
+                rs.getDate("dataLancamento").toLocalDate(),
+                rs.getDate("dataVencimento").toLocalDate(),
+                rs.getDouble("valorFatura")
+        );
     }
 
     public int buscarIdMotivoPorNome(Connection conn, String nomeMotivo) throws SQLException {
