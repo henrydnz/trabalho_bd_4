@@ -14,16 +14,17 @@ public class Utils {
 
     public static final String opcoesMenuPrincipal = """   
     ===== Menu Principal ====
-    1 - Cadastrar Novo Fornecedor
-    2 - Lancar Nova Fatura (Transacao OK)
-    3 - Lancar Nova Fatura (Transacao Incompleta)
-    4 - Lancar Nova Fatura (Transacao com Rollback)
-    5 - Listar Fornecedores
-    6 - Buscar Faturas por Fornecedor
-    7 - Executar Comando SQL
-    8 - Entrar com outro Usuario
-    9 - Deletar Fatura
-    0 - Sair
+    1  - Cadastrar Novo Fornecedor
+    2  - Lancar Nova Fatura (Transacao OK)
+    3  - Lancar Nova Fatura (Transacao Incompleta)
+    4  - Lancar Nova Fatura (Transacao com Rollback)
+    5  - Listar Fornecedores
+    6  - Buscar Faturas por Fornecedor
+    7  - Executar Comando SQL
+    8  - Entrar com outro Usuario
+    9  - Deletar Fatura
+    10 - Consultar Despesas Totais por Periodo
+    0  - Sair
     ==========================
     """;
 
