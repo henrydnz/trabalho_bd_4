@@ -358,9 +358,9 @@ public class CLI {
             List<Fornecedor> fornecedores = fornecedorDao.listarTodos();
 
             System.out.println("===== Lista de Fornecedores =====");
-            System.out.printf("%-5s %-25s %-16s %-15s\n", "ID", "Nome", "CNPJ", "Saldo a Pagar");
+            System.out.printf("%-5s %-33s %-16s %-15s\n", "ID", "Nome", "CNPJ", "Saldo a Pagar");
             for(Fornecedor fornecedor : fornecedores)
-                System.out.printf("%-5d %-25s %-16s R$ %-12.2f\n",
+                System.out.printf("%-5d %-33s %-16s R$ %-12.2f\n",
                         fornecedor.getId(), fornecedor.getNome(), fornecedor.getCnpj(), fornecedor.getSaldoAPagar());
         } catch (SQLException e) {
             System.out.println("Erro ao listar fornecedores: " + e.getMessage());
@@ -368,7 +368,7 @@ public class CLI {
     }
 
     private static void buscarFatura(){
-        System.out.println("===== Consulta das Faturas a Pagar (Tela 1) =====");
+        System.out.println("===== Consulta das Faturas a Pagar =====");
 
         Fornecedor fornecedor = formularioFornecedorExistente();
         if (fornecedor == null) return;
